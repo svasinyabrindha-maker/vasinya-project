@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SRI ACADEMY - Staff Attendance</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #004aad;
+            --accent-gold: #ffd700;
+            --bg-light: #f4f7f6;
+            --white: #ffffff;
+            --text-dark: #1a1a1a;
+            --danger: #e63946;
+            --success: #2a9d8f;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            margin: 0;
+            padding: 10px;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border-top: 6px solid var(--primary-blue);
+        }
+
+        .header {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 20px 15px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: 2px;
+            font-size: 24px;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .clock-section {
+            background: #eef2f3;
+            padding: 10px;
+            text-align: center;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .form-body { padding: 15px; }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .full-row { margin-bottom: 15px; }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            color: var(--primary-blue);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1.5px solid #ced4da;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-enter { background: var(--primary-blue); color: white; }
+        .btn-del { background: #f8d7da; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-export { background: var(--success); color: white; width: 100%; margin-top: 15px; }
+
+        button:active { transform: scale(0.96); }
+
+        .ledger-view {
+            margin-top: 20px;
+            overflow-x: auto;
+            border-top: 2px solid var(--primary-blue);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+
+        .status-pill {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+        }
+        .bg-present { background: var(--success); }
+        .bg-absent { background: var(--danger); }
+        .bg-cl { background: var(--accent-gold); color: black; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>SRI ACADEMY</h1>
+        <p>STAFF ATTENDANCE SYSTEM</p>
+    </div>
+
+    <div class="clock-section">
+        <div id="date">-- -- ----</div>
+        <div id="time" style="font-size: 20px;">00:00:00</div>
+    </div>
+
+    <div class="form-body">
+        <div class="input-row">
+            <div>
+                <label>SL NO</label>
+                <input type="number" id="slNo" placeholder="01">
+            </div>
+            <div>
+                <label>STAFF NAME</label>
+                <input type="text" id="staffName" placeholder="Enter Name">
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div>
+                <label>IN TIME</label>
+                <input type="time" id="inTime">
+            </div>
+            <div>
+                <label>OUT TIME</label>
+                <input type="time" id="outTime">
+            </div>
+        </div>
+
+        <div class="full-row">
+            <label>STATUS (ICON DROPDOWN)</label>
+            <select id="status">
+                <option value="Present">✅ Present</option>
+                <option value="Absent">❌ Absent</option>
+                <option value="CL">⭐ Casual Leave (CL)</option>
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-enter" onclick="addEntry()">ENTER DATA</button>
+            <button class="btn-del" onclick="clearLast()">DELETE</button>
+        </div>
+
+        <button class="btn-export" onclick="downloadProfessionalExcel()">📥 DOWNLOAD SUPERIOR REPORT</button>
+    </div>
+
+    <div class="ledger-view">
+        <table id="attendanceTable">
+            <thead>
+                <tr>
+                    <th>SL</th>
+                    <th>Staff Name</th>
+                    <th>Status</th>
+                    <th>Hours</th>
+                    <th>Lapsed</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('sri_academy_db')) || [];
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('date').innerText = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('time').innerText = now.toLocaleTimeString('en-GB');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function calculateHours(start, end) {
+        if (!start || !end) return { worked: 0, lapsed: 0 };
+        const s = start.split(':');
+        const e = end.split(':');
+        const diff = (new Date(0,0,0,e[0],e[1]) - new Date(0,0,0,s[0],s[1])) / 1000 / 60 / 60;
+        const worked = diff > 0 ? diff.toFixed(2) : 0;
+        const lapsed = (9 - worked).toFixed(2); // Assuming 9 hour standard shift
+        return { worked, lapsed: lapsed > 0 ? lapsed : 0 };
+    }
+
+    function addEntry() {
+        const name = document.getElementById('staffName').value;
+        const inT = document.getElementById('inTime').value;
+        const outT = document.getElementById('outTime').value;
+        const stat = document.getElementById('status').value;
+        const sl = document.getElementById('slNo').value;
+
+        if (!name) return alert("Please enter Staff Name");
+
+        const timeData = calculateHours(inT, outT);
+
+        const entry = {
+            sl: sl,
+            date: new Date().toLocaleDateString('en-GB'),
+            name: name,
+            in: inT || '--:--',
+            out: outT || '--:--',
+            status: stat,
+            worked: timeData.worked,
+            lapsed: timeData.lapsed
+        };
+
+        db.push(entry);
+        localStorage.setItem('sri_academy_db', JSON.stringify(db));
+        renderTable();
+        alert("Entry Added Successfully!");
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = db.slice(-5).map(e => `
+            <tr>
+                <td>${e.sl}</td>
+                <td><b>${e.name}</b></td>
+                <td><span class="status-pill bg-${e.status.toLowerCase()}">${e.status}</span></td>
+                <td>${e.worked}h</td>
+                <td style="color:red">${e.lapsed}h</td>
+            </tr>
+        `).join('');
+    }
+
+    function clearLast() {
+        if(confirm("Delete last entry?")) {
+            db.pop();
+            localStorage.setItem('sri_academy_db', JSON.stringify(db));
+            renderTable();
+        }
+    }
+
+    function downloadProfessionalExcel() {
+        if (db.length === 0) return alert("No data to export");
+        
+        const wb = XLSX.utils.book_new();
+        const staffNames = [...new Set(db.map(x => x.name))];
+
+        staffNames.forEach(staff => {
+            const staffData = db.filter(x => x.name === staff).map(x => ({
+                "SL NO": x.sl,
+                "DATE": x.date,
+                "IN TIME": x.in,
+                "OUT TIME": x.out,
+                "STATUS": x.status,
+                "HOURS WORKED": x.worked,
+                "LAPSED HOURS": x.lapsed,
+                "REMARK": x.worked >= 9 ? "Full Shift" : "Short Fall"
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(staffData);
+            
+            // Add filtering capability
+            ws['!autofilter'] = { ref: "A1:H1" };
+
+            XLSX.utils.book_append_sheet(wb, ws, staff.substring(0, 30));
+        });
+
+        XLSX.writeFile(wb, `SRI_ACADEMY_STAFF_REPORT_2026.xlsx`);
+    }
+
+    renderTable();
+</script>
+</body>
+</html>
